@@ -1,0 +1,45 @@
+buildscript {
+    ext.kotlin_version = '1.2.10'
+    ext.ktor_version = '0.9.0'
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+group 'com.sys1yagi'
+version '1.0'
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+kotlin {
+    experimental {
+        coroutines "enable"
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url "http://dl.bintray.com/kotlin/ktor" }
+    maven { url "https://dl.bintray.com/kotlin/kotlinx" }
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile "io.ktor:ktor-server-core:$ktor_version"
+    compile "io.ktor:ktor-server-netty:$ktor_version"
+    compile "ch.qos.logback:logback-classic:1.2.1"
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.assertj:assertj-core:3.9.0'
+    testCompile 'com.nhaarman:mockito-kotlin:1.5.0'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
