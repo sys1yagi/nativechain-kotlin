@@ -1,6 +1,5 @@
 package com.sys1yagi
 
-
 data class Block(
     val index: Long,
     val previousHash: String,

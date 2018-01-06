@@ -10,7 +10,8 @@ import java.security.MessageDigest
 class NativeChain(val timeProvider: TimeProvider) {
     val logger: Logger = LoggerFactory.getLogger("NativeChain");
 
-    val blockchain = arrayListOf(GenesisBlock)
+    var blockchain = arrayListOf(GenesisBlock)
+        private set
 
     fun generateNextBlock(blockData: String): Block {
         val previousBlock = getLatestBlock()
@@ -47,6 +48,37 @@ class NativeChain(val timeProvider: TimeProvider) {
         }
     }
 
+    fun replaceChain(newBlocks: List<Block>) {
+        if (isValidChain(newBlocks) && newBlocks.size > blockchain.size) {
+            logger.debug("Received blockchain is valid. Replacing current blockchain with received blockchain")
+            blockchain = ArrayList(newBlocks)
+        } else {
+            logger.debug("Received blockchain invalid");
+        }
+    }
+
+    fun isValidChain(blockchainToValidate: List<Block>): Boolean {
+        if (blockchainToValidate.isEmpty()) {
+            return false
+        }
+        if (blockchainToValidate.first() != GenesisBlock) {
+            return false
+        }
+
+        val tempBlocks = arrayListOf(blockchainToValidate.first())
+        blockchainToValidate.forEachIndexed { index, block ->
+            if (isValidNewBlock(blockchainToValidate[index], tempBlocks[index - 1])) {
+                tempBlocks.add(blockchainToValidate[index]);
+            } else {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    fun getLatestBlock() = blockchain.last()
+
     private fun calculateHash(
         index: Long,
         previousHash: String,
@@ -63,6 +95,4 @@ class NativeChain(val timeProvider: TimeProvider) {
         block.timestamp,
         block.data
     )
-
-    private fun getLatestBlock() = blockchain.last()
 }
