@@ -44,44 +44,10 @@ fun main(args: Array<String>) {
         listOf(Peer(it))
     } ?: emptyList()
 
-    val jsonConverter = GsonConverter(Gson())
     val nativeChain = NativeChain(DefaultTimeProvider())
+    val jsonConverter = GsonConverter(Gson())
 
-    val queryChainLengthMsg = "{'type': ${MessageType.QUERY_LATEST.ordinal}}"
-    val queryAllMsg = "{'type': ${MessageType.QUERY_ALL.ordinal}}"
-
-    fun responseChainMsg() =
-        """
-        {
-            'type': ${MessageType.RESPONSE_BLOCKCHAIN.ordinal}
-            'blockchain': ${jsonConverter.toJson(nativeChain.blockchain)}
-        }
-        """
-
-    fun responseLatestMsg() =
-        """
-        {
-            'type': ${MessageType.RESPONSE_BLOCK.ordinal},
-            'block': ${jsonConverter.toJson(nativeChain.getLatestBlock())}
-        }
-        """
-
-    val sockets = arrayListOf<WebSocketInterface>()
-
-    fun write(session: WebSocketInterface, message: String) {
-        session.send(message)
-    }
-
-    fun broadcast(message: String) {
-        sockets.forEach {
-            write(it, message)
-        }
-    }
-
-    fun initConnection(session: WebSocketInterface) {
-        sockets += session
-        write(session, queryChainLengthMsg)
-    }
+    val pool = NativeChainWebSocketInterfacePool(nativeChain, jsonConverter)
 
     fun handleBlockchainResponse(receivedBlocks: List<Block>) {
         val latestBlockReceived = receivedBlocks.last()
@@ -91,14 +57,14 @@ fun main(args: Array<String>) {
             if (latestBlockHeld.hash === latestBlockReceived.previousHash) {
                 logger.debug("We can append the received block to our chain")
                 nativeChain.addBlock(latestBlockReceived)
-                broadcast(responseLatestMsg())
+                pool.broadcastLatestMessage()
             } else if (receivedBlocks.size == 1) {
                 logger.debug("We have to query the chain from our peer")
-                broadcast(queryAllMsg)
+                pool.broadcastAllMessage()
             } else {
                 logger.debug("Received blockchain is longer than current blockchain")
                 nativeChain.replaceChain(receivedBlocks)
-                broadcast(responseLatestMsg())
+                pool.broadcastLatestMessage()
             }
         } else {
             logger.debug("received blockchain is not longer than current blockchain. Do nothing")
@@ -110,10 +76,10 @@ fun main(args: Array<String>) {
         val message = jsonConverter.fromJson(json, Message::class.java)
         when (message.messageType()) {
             MessageType.QUERY_LATEST -> {
-                from.send(responseLatestMsg())
+                pool.sendLatestMessage(from)
             }
             MessageType.QUERY_ALL -> {
-                from.send(responseChainMsg());
+                pool.sendChainMessage(from)
             }
             MessageType.RESPONSE_BLOCK -> {
                 handleBlockchainResponse(listOf(message.block!!))
@@ -128,7 +94,7 @@ fun main(args: Array<String>) {
         newPeers.forEach { peer ->
             val webSocketChannel = WebSocketChannel(URI.create(peer.host))
             webSocketChannel.connect {
-                initConnection(webSocketChannel)
+                pool.initConnection(webSocketChannel)
                 async {
                     while (isActive) {
                         val message = it.receive()
@@ -152,7 +118,7 @@ fun main(args: Array<String>) {
             webSocket {
                 logger.debug("receive websocket connection")
                 val socket = KtorWebSocket(this)
-                initConnection(socket)
+                pool.initConnection(socket)
                 try {
                     incoming.consumeEach { frame ->
                         if (frame is Frame.Text) {
@@ -177,12 +143,12 @@ fun main(args: Array<String>) {
                 val data = call.request.receiveContent().inputStream().bufferedReader().readText()
                 val mineBlock = jsonConverter.fromJson(data, MineBlock::class.java)
                 nativeChain.addBlock(nativeChain.generateNextBlock(mineBlock.data))
-                broadcast(responseLatestMsg())
+                pool.broadcastLatestMessage()
                 call.respond(HttpStatusCode.OK)
             }
 
             get("/peers") {
-                call.respondText(sockets.joinToString(separator = "\n") { it.peer() })
+                call.respondText(pool.sockets.joinToString(separator = "\n") { it.peer() })
             }
 
             post("/addPeer") {
