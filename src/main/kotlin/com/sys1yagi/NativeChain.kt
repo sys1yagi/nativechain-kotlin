@@ -27,7 +27,7 @@ class NativeChain(val timeProvider: TimeProvider) {
                 logger.debug("invalid index")
                 false
             }
-            previousBlock.hash !== newBlock.previousHash -> {
+            previousBlock.hash != newBlock.previousHash -> {
                 logger.debug("invalid previous hash")
                 false
             }
