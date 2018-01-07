@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
 class NativeChain(val timeProvider: TimeProvider) {
-    val logger: Logger = LoggerFactory.getLogger("NativeChain");
+    val logger: Logger = LoggerFactory.getLogger("NativeChain")
 
     var blockchain = arrayListOf(GenesisBlock)
         private set
@@ -53,7 +53,7 @@ class NativeChain(val timeProvider: TimeProvider) {
             logger.debug("Received blockchain is valid. Replacing current blockchain with received blockchain")
             blockchain = ArrayList(newBlocks)
         } else {
-            logger.debug("Received blockchain invalid");
+            logger.debug("Received blockchain invalid")
         }
     }
 
@@ -67,17 +67,13 @@ class NativeChain(val timeProvider: TimeProvider) {
             return false
         }
 
-        val tempBlocks = arrayListOf(blockchainToValidate.first())
-        blockchainToValidate.forEachIndexed { index, _ ->
-            if (isValidNewBlock(blockchainToValidate[index], tempBlocks[index - 1])) {
-                tempBlocks.add(blockchainToValidate[index]);
-            } else {
-                logger.debug("Faced invalid block. index=$index")
-                return false;
+        blockchainToValidate.zip(blockchainToValidate.drop(1)).forEachIndexed { index, pair ->
+            if (!isValidNewBlock(pair.second, pair.first)) {
+                logger.debug("Faced invalid block. index=${index+1}")
+                return false
             }
         }
-
-        return true;
+        return true
     }
 
     fun getLatestBlock() = blockchain.last()
