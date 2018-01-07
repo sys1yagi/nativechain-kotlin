@@ -48,7 +48,6 @@ class WebSocketChannel(val uri: URI) : WebSocketInterface {
     override fun receiveChannel() = channel
 
     override fun send(message: String) {
-        logger.debug("send! $message")
         session?.basicRemote?.sendText(message)
     }
 

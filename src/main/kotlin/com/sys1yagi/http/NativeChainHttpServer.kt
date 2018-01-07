@@ -4,14 +4,9 @@ import com.google.gson.Gson
 import com.sys1yagi.NativeChain
 import com.sys1yagi.util.DefaultTimeProvider
 import com.sys1yagi.util.GsonConverter
-import com.sys1yagi.websocket.KtorWebSocket
-import com.sys1yagi.websocket.NativeChainWebSocketInterfacePool
+import com.sys1yagi.websocket.NativeChainWebSocketServer
 import com.sys1yagi.websocket.Peer
-import com.sys1yagi.websocket.WebSocketChannel
 import io.ktor.application.call
-import io.ktor.application.install
-import io.ktor.features.CallLogging
-import io.ktor.features.DefaultHeaders
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
@@ -21,12 +16,7 @@ import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.ktor.websocket.WebSockets
-import io.ktor.websocket.webSocket
-import kotlinx.coroutines.experimental.async
 import org.slf4j.LoggerFactory
-import java.net.URI
-import java.time.Duration
 
 
 fun main(args: Array<String>) {
@@ -45,37 +35,15 @@ fun main(args: Array<String>) {
 
     val nativeChain = NativeChain(DefaultTimeProvider())
     val jsonConverter = GsonConverter(Gson())
+    val webSocketServer = NativeChainWebSocketServer(nativeChain, jsonConverter)
 
-    val pool = NativeChainWebSocketInterfacePool(nativeChain, jsonConverter)
+    // connect peers
+    webSocketServer.connectToPeers(peers)
 
-    fun connectToPeers(newPeers: List<Peer>) {
-        newPeers.forEach { peer ->
-            val webSocketChannel = WebSocketChannel(URI.create(peer.host))
-            webSocketChannel.connect {
-                async {
-                    pool.initConnection(webSocketChannel)
-                }
-            }
-        }
-    }
+    // startP2PServer
+    webSocketServer.startP2PServer(webSocketPort)
 
-    connectToPeers(peers)
-
-    embeddedServer(Netty, webSocketPort) {
-        install(DefaultHeaders)
-        install(CallLogging)
-        install(WebSockets) {
-            pingPeriod = Duration.ofMinutes(1)
-        }
-        routing {
-            webSocket {
-                logger.debug("receive websocket connection")
-                val socket = KtorWebSocket(this)
-                pool.initConnection(socket)
-            }
-        }
-    }.start(wait = false)
-
+    // start Http server
     embeddedServer(Netty, httpPort) {
         routing {
             get("/blocks") {
@@ -87,18 +55,18 @@ fun main(args: Array<String>) {
                 val data = call.request.receiveContent().inputStream().bufferedReader().readText()
                 val mineBlock = jsonConverter.fromJson(data, MineBlock::class.java)
                 nativeChain.addBlock(nativeChain.generateNextBlock(mineBlock.data))
-                pool.broadcastLatestMessage()
+                webSocketServer.broadcastLatestMessage()
                 call.respond(HttpStatusCode.OK)
             }
 
             get("/peers") {
-                call.respondText(pool.sockets.joinToString(separator = "\n") { it.peer() })
+                call.respondText(webSocketServer.sockets().joinToString(separator = "\n") { it.peer() })
             }
 
             post("/addPeer") {
                 val data = call.request.receiveContent().inputStream().bufferedReader().readText()
                 val peer = jsonConverter.fromJson(data, Peer::class.java)
-                connectToPeers(listOf(peer))
+                webSocketServer.connectToPeers(listOf(peer))
                 call.respond(HttpStatusCode.OK)
             }
         }

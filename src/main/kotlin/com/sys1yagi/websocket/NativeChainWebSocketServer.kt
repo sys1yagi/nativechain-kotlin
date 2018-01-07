@@ -3,18 +3,28 @@ package com.sys1yagi.websocket
 import com.sys1yagi.Block
 import com.sys1yagi.NativeChain
 import com.sys1yagi.util.JsonConverter
+import io.ktor.application.install
+import io.ktor.features.CallLogging
+import io.ktor.features.DefaultHeaders
+import io.ktor.routing.routing
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
+import io.ktor.websocket.WebSockets
+import io.ktor.websocket.webSocket
 import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.channels.consumeEach
 import org.slf4j.LoggerFactory
+import java.net.URI
+import java.time.Duration
 
-class NativeChainWebSocketInterfacePool(val nativeChain: NativeChain, val jsonConverter: JsonConverter) {
+class NativeChainWebSocketServer(val nativeChain: NativeChain, val jsonConverter: JsonConverter) {
 
-    private val logger = LoggerFactory.getLogger("NativeChainWebSocketInterfacePool")
+    private val logger = LoggerFactory.getLogger("NativeChainWebSocketServer")
 
     private fun buildChainMessage() =
         """
         {
-            'type': ${MessageType.RESPONSE_BLOCKCHAIN.ordinal}
+            'type': ${MessageType.RESPONSE_BLOCKCHAIN.ordinal},
             'blockchain': ${jsonConverter.toJson(nativeChain.blockchain)}
         }
         """
@@ -27,7 +37,38 @@ class NativeChainWebSocketInterfacePool(val nativeChain: NativeChain, val jsonCo
         }
         """
 
-    val sockets = arrayListOf<WebSocketInterface>()
+    private val sockets = arrayListOf<WebSocketInterface>()
+
+    fun sockets(): List<WebSocketInterface> = sockets
+
+    fun connectToPeers(newPeers: List<Peer>) {
+        newPeers.forEach { peer ->
+            val webSocketChannel = WebSocketChannel(URI.create(peer.host))
+            webSocketChannel.connect {
+                async {
+                    initConnection(webSocketChannel)
+                }
+            }
+        }
+    }
+
+    fun startP2PServer(port: Int) {
+        embeddedServer(Netty, port) {
+            install(DefaultHeaders)
+            install(CallLogging)
+            install(WebSockets) {
+                pingPeriod = Duration.ofMinutes(1)
+            }
+            routing {
+                webSocket {
+                    logger.debug("receive websocket connection")
+                    val socket = KtorWebSocket(this)
+                    initConnection(socket)
+                }
+            }
+        }.start(wait = false)
+
+    }
 
     suspend fun initConnection(session: WebSocketInterface) {
         sockets += session
@@ -43,27 +84,27 @@ class NativeChainWebSocketInterfacePool(val nativeChain: NativeChain, val jsonCo
         }
     }
 
-    fun chainLengthMessage(session: WebSocketInterface) {
-        write(session, "{'type': ${MessageType.QUERY_LATEST.ordinal}}")
-    }
-
-    fun sendLatestMessage(session: WebSocketInterface) {
-        write(session, buildLatestMessage())
-    }
-
-    fun sendChainMessage(session: WebSocketInterface) {
-        write(session, buildChainMessage())
-    }
-
     fun broadcastLatestMessage() {
         broadcast(buildLatestMessage())
     }
 
-    fun broadcastAllMessage() {
+    private fun chainLengthMessage(session: WebSocketInterface) {
+        write(session, "{'type': ${MessageType.QUERY_LATEST.ordinal}}")
+    }
+
+    private fun sendLatestMessage(session: WebSocketInterface) {
+        write(session, buildLatestMessage())
+    }
+
+    private fun sendChainMessage(session: WebSocketInterface) {
+        write(session, buildChainMessage())
+    }
+
+    private fun broadcastAllMessage() {
         broadcast("{'type': ${MessageType.QUERY_ALL.ordinal}}")
     }
 
-    fun handleBlockchainResponse(receivedBlocks: List<Block>) {
+    private fun handleBlockchainResponse(receivedBlocks: List<Block>) {
         val latestBlockReceived = receivedBlocks.last()
         val latestBlockHeld = nativeChain.getLatestBlock()
         if (latestBlockReceived.index > latestBlockHeld.index) {
@@ -85,7 +126,7 @@ class NativeChainWebSocketInterfacePool(val nativeChain: NativeChain, val jsonCo
         }
     }
 
-    fun handleMessage(from: WebSocketInterface, json: String) {
+    private fun handleMessage(from: WebSocketInterface, json: String) {
         logger.debug("receive ${json}")
         val message = jsonConverter.fromJson(json, Message::class.java)
         when (message.messageType()) {

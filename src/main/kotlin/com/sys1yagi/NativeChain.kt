@@ -59,17 +59,20 @@ class NativeChain(val timeProvider: TimeProvider) {
 
     fun isValidChain(blockchainToValidate: List<Block>): Boolean {
         if (blockchainToValidate.isEmpty()) {
+            logger.debug("blockchainToValidate is empty.")
             return false
         }
         if (blockchainToValidate.first() != GenesisBlock) {
+            logger.debug("blockchainToValidate's GenesisBlock is invalid.")
             return false
         }
 
         val tempBlocks = arrayListOf(blockchainToValidate.first())
-        blockchainToValidate.forEachIndexed { index, block ->
+        blockchainToValidate.forEachIndexed { index, _ ->
             if (isValidNewBlock(blockchainToValidate[index], tempBlocks[index - 1])) {
                 tempBlocks.add(blockchainToValidate[index]);
             } else {
+                logger.debug("Faced invalid block. index=$index")
                 return false;
             }
         }
