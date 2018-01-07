@@ -1,4 +1,4 @@
-package com.sys1yagi.websocket
+package com.sys1yagi.websocket.`interface`
 
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 

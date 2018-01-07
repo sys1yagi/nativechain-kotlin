@@ -1,8 +1,14 @@
-package com.sys1yagi.websocket
+package com.sys1yagi.websocket.server
 
 import com.sys1yagi.Block
 import com.sys1yagi.NativeChain
 import com.sys1yagi.util.JsonConverter
+import com.sys1yagi.websocket.Message
+import com.sys1yagi.websocket.MessageType
+import com.sys1yagi.websocket.Peer
+import com.sys1yagi.websocket.`interface`.KtorWebSocket
+import com.sys1yagi.websocket.`interface`.TryusWebSocket
+import com.sys1yagi.websocket.`interface`.WebSocketInterface
 import io.ktor.application.install
 import io.ktor.features.CallLogging
 import io.ktor.features.DefaultHeaders
@@ -43,7 +49,7 @@ class NativeChainWebSocketServer(val nativeChain: NativeChain, val jsonConverter
 
     fun connectToPeers(newPeers: List<Peer>) {
         newPeers.forEach { peer ->
-            val webSocketChannel = WebSocketChannel(URI.create(peer.host))
+            val webSocketChannel = TryusWebSocket(URI.create(peer.host))
             webSocketChannel.connect {
                 async {
                     initConnection(webSocketChannel)

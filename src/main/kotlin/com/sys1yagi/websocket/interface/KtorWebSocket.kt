@@ -1,4 +1,4 @@
-package com.sys1yagi.websocket
+package com.sys1yagi.websocket.`interface`
 
 import io.ktor.request.uri
 import io.ktor.websocket.Frame

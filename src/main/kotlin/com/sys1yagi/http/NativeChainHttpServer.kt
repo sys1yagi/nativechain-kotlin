@@ -4,7 +4,7 @@ import com.google.gson.Gson
 import com.sys1yagi.NativeChain
 import com.sys1yagi.util.DefaultTimeProvider
 import com.sys1yagi.util.GsonConverter
-import com.sys1yagi.websocket.NativeChainWebSocketServer
+import com.sys1yagi.websocket.server.NativeChainWebSocketServer
 import com.sys1yagi.websocket.Peer
 import io.ktor.application.call
 import io.ktor.http.ContentType

@@ -1,4 +1,4 @@
-package com.sys1yagi.websocket
+package com.sys1yagi.websocket.`interface`
 
 import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.channels.sendBlocking
@@ -8,8 +8,8 @@ import java.net.URI
 import javax.websocket.*
 
 
-class WebSocketChannel(val uri: URI) : WebSocketInterface {
-    private val logger = LoggerFactory.getLogger("WebSocketChannel")
+class TryusWebSocket(val uri: URI) : WebSocketInterface {
+    private val logger = LoggerFactory.getLogger("TryusWebSocket")
     private val channel = Channel<String>()
     private var session: Session? = null
 
@@ -21,7 +21,7 @@ class WebSocketChannel(val uri: URI) : WebSocketInterface {
             object : Endpoint() {
                 override fun onOpen(session: Session, config: EndpointConfig?) {
                     logger.debug("onOpen ${uri.scheme}://${uri.host}")
-                    this@WebSocketChannel.session = session
+                    this@TryusWebSocket.session = session
                     onOpen(channel)
                     session.addMessageHandler(MessageHandler.Whole<String> { message ->
                         channel.sendBlocking(message)
