@@ -21,13 +21,13 @@ dependencies {
     compile "io.ktor:ktor-server-core:$ktor_version"
     compile "io.ktor:ktor-server-netty:$ktor_version"
     compile "io.ktor:ktor-websockets:$ktor_version"
-    compile "ch.qos.logback:logback-classic:1.2.1"
-    compile "com.google.code.gson:gson:2.8.2"
-    compile "org.glassfish.tyrus.bundles:tyrus-standalone-client-jdk:$tyrusVersion"
-    compile "org.glassfish.tyrus:tyrus-container-grizzly-server:$tyrusVersion"
-    testCompile "junit:junit:4.12"
-    testCompile "org.assertj:assertj-core:3.9.0"
-    testCompile "com.nhaarman:mockito-kotlin:1.5.0"
+    compile "ch.qos.logback:logback-classic:$logback_version"
+    compile "com.google.code.gson:gson:$gson_version"
+    compile "org.glassfish.tyrus.bundles:tyrus-standalone-client-jdk:$tyrus_version"
+    compile "org.glassfish.tyrus:tyrus-container-grizzly-server:$tyrus_version"
+    testCompile "junit:junit:$junit_version"
+    testCompile "org.assertj:assertj-core:$assertj_version"
+    testCompile "com.nhaarman:mockito-kotlin:$mockito_kotlin_version"
 }
 
 compileKotlin {
