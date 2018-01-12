@@ -1,0 +1,45 @@
+group 'com.sys1yagi'
+version '1.0'
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+kotlin {
+    experimental {
+        coroutines "enable"
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url "http://dl.bintray.com/kotlin/ktor" }
+    maven { url "https://dl.bintray.com/kotlin/kotlinx" }
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile "io.ktor:ktor-server-core:$ktor_version"
+    compile "io.ktor:ktor-server-netty:$ktor_version"
+    compile "io.ktor:ktor-websockets:$ktor_version"
+    compile "ch.qos.logback:logback-classic:1.2.1"
+    compile "com.google.code.gson:gson:2.8.2"
+    compile "org.glassfish.tyrus.bundles:tyrus-standalone-client-jdk:$tyrusVersion"
+    compile "org.glassfish.tyrus:tyrus-container-grizzly-server:$tyrusVersion"
+    testCompile "junit:junit:4.12"
+    testCompile "org.assertj:assertj-core:3.9.0"
+    testCompile "com.nhaarman:mockito-kotlin:1.5.0"
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'nativechain-kotlin', 'Implementation-Version': 1.0
+        attributes "Main-Class" : "com.sys1yagi.http.NativeChainHttpServerKt"
+    }
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+}
