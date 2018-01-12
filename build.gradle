@@ -1,3 +1,6 @@
+group 'com.sys1yagi'
+version '1.0'
+
 buildscript {
     ext.kotlin_version = '1.2.10'
     ext.kotlin_coroutine_version = '0.21'

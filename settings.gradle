@@ -1,2 +1,3 @@
 include 'nativechain'
+include 'nativechain-with-lightweight-pow'
 
