@@ -40,7 +40,7 @@ compileTestKotlin {
 jar {
     manifest {
         attributes 'Implementation-Title': 'nativechain-kotlin-with-pof', 'Implementation-Version': 1.0
-        attributes "Main-Class" : "com.sys1yagi.http.NativeChainHttpServerKt"
+        attributes "Main-Class" : "com.sys1yagi.nativechain.http.NativeChainHttpServerKt"
     }
     from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
 }

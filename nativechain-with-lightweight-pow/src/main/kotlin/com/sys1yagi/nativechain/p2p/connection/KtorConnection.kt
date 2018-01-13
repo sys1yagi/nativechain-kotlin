@@ -1,4 +1,4 @@
-package com.sys1yagi.websocket.`interface`
+package com.sys1yagi.nativechain.p2p.connection
 
 import io.ktor.request.uri
 import io.ktor.websocket.Frame
@@ -6,7 +6,7 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.readText
 import kotlinx.coroutines.experimental.channels.*
 
-class KtorWebSocket(val socket: WebSocketSession) : WebSocketInterface {
+class KtorConnection(val socket: WebSocketSession) : Connection {
 
     override fun send(message: String) {
         socket.outgoing.sendBlocking(Frame.Text(message))

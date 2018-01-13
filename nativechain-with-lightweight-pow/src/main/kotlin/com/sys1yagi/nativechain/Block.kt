@@ -1,4 +1,4 @@
-package com.sys1yagi
+package com.sys1yagi.nativechain
 
 data class Block(
     val index: Long,

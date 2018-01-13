@@ -2,9 +2,11 @@ package com.sys1yagi
 
 import com.nhaarman.mockito_kotlin.mock
 import com.nhaarman.mockito_kotlin.whenever
-import com.sys1yagi.util.DefaultTimeProvider
-import com.sys1yagi.util.GenesisBlock
-import com.sys1yagi.util.TimeProvider
+import com.sys1yagi.nativechain.Block
+import com.sys1yagi.nativechain.NativeChain
+import com.sys1yagi.nativechain.util.DefaultTimeProvider
+import com.sys1yagi.nativechain.util.GenesisBlock
+import com.sys1yagi.nativechain.util.TimeProvider
 import org.assertj.core.api.Assertions.*
 import org.junit.Test
 

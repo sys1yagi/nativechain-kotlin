@@ -1,4 +1,4 @@
-package com.sys1yagi.util
+package com.sys1yagi.nativechain.util
 
 import com.google.gson.Gson
 

@@ -1,4 +1,4 @@
-package com.sys1yagi.websocket.`interface`
+package com.sys1yagi.nativechain.p2p.connection
 
 import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.channels.sendBlocking
@@ -8,8 +8,8 @@ import java.net.URI
 import javax.websocket.*
 
 
-class TryusWebSocket(val uri: URI) : WebSocketInterface {
-    private val logger = LoggerFactory.getLogger("TryusWebSocket")
+class TryusConnection(val uri: URI) : Connection {
+    private val logger = LoggerFactory.getLogger("TryusConnection")
     private val channel = Channel<String>()
     private var session: Session? = null
 
@@ -21,7 +21,7 @@ class TryusWebSocket(val uri: URI) : WebSocketInterface {
             object : Endpoint() {
                 override fun onOpen(session: Session, config: EndpointConfig?) {
                     logger.debug("onOpen ${uri.scheme}://${uri.host}")
-                    this@TryusWebSocket.session = session
+                    this@TryusConnection.session = session
                     onOpen(channel)
                     session.addMessageHandler(MessageHandler.Whole<String> { message ->
                         channel.sendBlocking(message)

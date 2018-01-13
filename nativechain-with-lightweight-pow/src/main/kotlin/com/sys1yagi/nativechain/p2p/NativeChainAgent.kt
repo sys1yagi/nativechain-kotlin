@@ -1,14 +1,11 @@
-package com.sys1yagi.websocket.server
+package com.sys1yagi.nativechain.p2p
 
-import com.sys1yagi.Block
-import com.sys1yagi.NativeChain
-import com.sys1yagi.util.JsonConverter
-import com.sys1yagi.websocket.Message
-import com.sys1yagi.websocket.MessageType
-import com.sys1yagi.websocket.Peer
-import com.sys1yagi.websocket.`interface`.KtorWebSocket
-import com.sys1yagi.websocket.`interface`.TryusWebSocket
-import com.sys1yagi.websocket.`interface`.WebSocketInterface
+import com.sys1yagi.nativechain.Block
+import com.sys1yagi.nativechain.NativeChain
+import com.sys1yagi.nativechain.util.JsonConverter
+import com.sys1yagi.nativechain.p2p.connection.KtorConnection
+import com.sys1yagi.nativechain.p2p.connection.TryusConnection
+import com.sys1yagi.nativechain.p2p.connection.Connection
 import io.ktor.application.install
 import io.ktor.features.CallLogging
 import io.ktor.features.DefaultHeaders
@@ -23,9 +20,9 @@ import org.slf4j.LoggerFactory
 import java.net.URI
 import java.time.Duration
 
-class NativeChainWebSocketServer(val nativeChain: NativeChain, val jsonConverter: JsonConverter) {
+class NativeChainAgent(val nativeChain: NativeChain, val jsonConverter: JsonConverter) {
 
-    private val logger = LoggerFactory.getLogger("NativeChainWebSocketServer")
+    private val logger = LoggerFactory.getLogger("NativeChainAgent")
 
     private fun buildChainMessage() =
         """
@@ -43,13 +40,13 @@ class NativeChainWebSocketServer(val nativeChain: NativeChain, val jsonConverter
         }
         """
 
-    private val sockets = arrayListOf<WebSocketInterface>()
+    private val sockets = arrayListOf<Connection>()
 
-    fun sockets(): List<WebSocketInterface> = sockets
+    fun sockets(): List<Connection> = sockets
 
     fun connectToPeers(newPeers: List<Peer>) {
         newPeers.forEach { peer ->
-            val webSocketChannel = TryusWebSocket(URI.create(peer.host))
+            val webSocketChannel = TryusConnection(URI.create(peer.host))
             webSocketChannel.connect {
                 async {
                     initConnection(webSocketChannel)
@@ -67,8 +64,8 @@ class NativeChainWebSocketServer(val nativeChain: NativeChain, val jsonConverter
             }
             routing {
                 webSocket {
-                    logger.debug("receive websocket connection")
-                    val socket = KtorWebSocket(this)
+                    logger.debug("receive p2p connection")
+                    val socket = KtorConnection(this)
                     initConnection(socket)
                 }
             }
@@ -76,13 +73,13 @@ class NativeChainWebSocketServer(val nativeChain: NativeChain, val jsonConverter
 
     }
 
-    suspend fun initConnection(session: WebSocketInterface) {
+    suspend fun initConnection(session: Connection) {
         sockets += session
         chainLengthMessage(session)
 
         try {
             session.receiveChannel().consumeEach {
-                logger.debug("receive peer")
+                logger.debug("receive connection")
                 handleMessage(session, it)
             }
         } catch (e: Exception) {
@@ -94,15 +91,15 @@ class NativeChainWebSocketServer(val nativeChain: NativeChain, val jsonConverter
         broadcast(buildLatestMessage())
     }
 
-    private fun chainLengthMessage(session: WebSocketInterface) {
+    private fun chainLengthMessage(session: Connection) {
         write(session, "{'type': ${MessageType.QUERY_LATEST.ordinal}}")
     }
 
-    private fun sendLatestMessage(session: WebSocketInterface) {
+    private fun sendLatestMessage(session: Connection) {
         write(session, buildLatestMessage())
     }
 
-    private fun sendChainMessage(session: WebSocketInterface) {
+    private fun sendChainMessage(session: Connection) {
         write(session, buildChainMessage())
     }
 
@@ -120,7 +117,7 @@ class NativeChainWebSocketServer(val nativeChain: NativeChain, val jsonConverter
                 nativeChain.addBlock(latestBlockReceived)
                 broadcastLatestMessage()
             } else if (receivedBlocks.size == 1) {
-                logger.debug("We have to query the chain from our peer")
+                logger.debug("We have to query the chain from our connection")
                 broadcastAllMessage()
             } else {
                 logger.debug("Received blockchain is longer than current blockchain")
@@ -132,7 +129,7 @@ class NativeChainWebSocketServer(val nativeChain: NativeChain, val jsonConverter
         }
     }
 
-    private fun handleMessage(from: WebSocketInterface, json: String) {
+    private fun handleMessage(from: Connection, json: String) {
         logger.debug("receive ${json}")
         val message = jsonConverter.fromJson(json, Message::class.java)
         when (message.messageType()) {
@@ -151,7 +148,7 @@ class NativeChainWebSocketServer(val nativeChain: NativeChain, val jsonConverter
         }
     }
 
-    private fun write(session: WebSocketInterface, message: String) {
+    private fun write(session: Connection, message: String) {
         session.send(message)
     }
 

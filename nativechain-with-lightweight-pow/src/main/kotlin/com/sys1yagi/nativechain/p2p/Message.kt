@@ -1,6 +1,6 @@
-package com.sys1yagi.websocket
+package com.sys1yagi.nativechain.p2p
 
-import com.sys1yagi.Block
+import com.sys1yagi.nativechain.Block
 
 data class Message(
     private val type: Int,

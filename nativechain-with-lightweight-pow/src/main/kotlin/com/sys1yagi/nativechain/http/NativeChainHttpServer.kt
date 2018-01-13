@@ -1,11 +1,11 @@
-package com.sys1yagi.http
+package com.sys1yagi.nativechain.http
 
 import com.google.gson.Gson
-import com.sys1yagi.NativeChain
-import com.sys1yagi.util.DefaultTimeProvider
-import com.sys1yagi.util.GsonConverter
-import com.sys1yagi.websocket.server.NativeChainWebSocketServer
-import com.sys1yagi.websocket.Peer
+import com.sys1yagi.nativechain.NativeChain
+import com.sys1yagi.nativechain.util.DefaultTimeProvider
+import com.sys1yagi.nativechain.util.GsonConverter
+import com.sys1yagi.nativechain.p2p.NativeChainAgent
+import com.sys1yagi.nativechain.p2p.Peer
 import io.ktor.application.call
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -26,7 +26,7 @@ fun main(args: Array<String>) {
         return
     }
     val webSocketPort = args.getOrNull(1)?.toInt() ?: run {
-        logger.error("Should set websocket port.")
+        logger.error("Should set p2p port.")
         return
     }
     val peers = args.getOrNull(2)?.let {
@@ -35,7 +35,7 @@ fun main(args: Array<String>) {
 
     val nativeChain = NativeChain(DefaultTimeProvider())
     val jsonConverter = GsonConverter(Gson())
-    val webSocketServer = NativeChainWebSocketServer(nativeChain, jsonConverter)
+    val webSocketServer = NativeChainAgent(nativeChain, jsonConverter)
 
     // connect peers
     webSocketServer.connectToPeers(peers)

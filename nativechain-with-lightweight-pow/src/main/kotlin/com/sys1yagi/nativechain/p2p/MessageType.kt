@@ -1,4 +1,4 @@
-package com.sys1yagi.websocket
+package com.sys1yagi.nativechain.p2p
 
 enum class MessageType {
     QUERY_LATEST,

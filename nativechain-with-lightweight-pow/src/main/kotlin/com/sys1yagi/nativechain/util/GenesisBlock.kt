@@ -1,6 +1,6 @@
-package com.sys1yagi.util
+package com.sys1yagi.nativechain.util
 
-import com.sys1yagi.Block
+import com.sys1yagi.nativechain.Block
 
 val GenesisBlock = Block(
     0,

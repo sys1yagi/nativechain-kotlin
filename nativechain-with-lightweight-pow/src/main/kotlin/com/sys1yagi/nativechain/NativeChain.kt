@@ -1,7 +1,7 @@
-package com.sys1yagi
+package com.sys1yagi.nativechain
 
-import com.sys1yagi.util.GenesisBlock
-import com.sys1yagi.util.TimeProvider
+import com.sys1yagi.nativechain.util.GenesisBlock
+import com.sys1yagi.nativechain.util.TimeProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
