@@ -1,5 +1,3 @@
 package com.sys1yagi.nativechain
 
-class Coin {
-
-}
+data class Coin(val user: User, val amount: Long)

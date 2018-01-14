@@ -16,7 +16,7 @@ class NativeChain(val timeProvider: TimeProvider) {
     fun generateNextBlock(blockData: String): OldBlock {
         val previousBlock = getLatestBlock()
         val nextIndex = previousBlock.index + 1
-        val nextTimestamp = timeProvider.nowSec()
+        val nextTimestamp = timeProvider.nowSecond()
         val nextHash = calculateHash(nextIndex, previousBlock.hash, nextTimestamp, blockData)
         return OldBlock(nextIndex, previousBlock.hash, nextTimestamp, blockData, nextHash)
     }

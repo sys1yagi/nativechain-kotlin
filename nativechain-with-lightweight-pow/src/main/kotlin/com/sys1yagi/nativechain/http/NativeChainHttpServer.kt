@@ -33,7 +33,7 @@ fun main(args: Array<String>) {
         listOf(Peer(it))
     } ?: emptyList()
 
-    val nativeChain = NativeChain(DefaultTimeProvider())
+    val nativeChain = NativeChain(DefaultTimeProvider)
     val jsonConverter = GsonConverter(Gson())
     val webSocketServer = NativeChainAgent(nativeChain, jsonConverter)
 
