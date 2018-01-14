@@ -20,34 +20,36 @@ object NativeChainSpec : Spek({
         val timeProvider: TimeProvider = mock()
         whenever(timeProvider.nowSecond()).thenReturn(10L)
         val nativeChain = NativeChain(timeProvider)
-        val block = nativeChain.generateNextBlock("new data!")
+        val block = nativeChain.generateNextBlock(emptyList(), "new transactions!")
         it("success") {
             assertThat(block.index).isEqualTo(1)
             assertThat(block.previousHash).isEqualTo(GenesisBlock.hash)
             assertThat(block.timestamp).isEqualTo(10L)
-            assertThat(block.data).isEqualTo("new data!")
-            assertThat(block.hash).isEqualTo("655830C8F75597F4BA668B114798C1E71E6437D12C2AEA33F57444E768D1749C")
+            assertThat(block.transactions).isEmpty()
+            assertThat(block.script).isEqualTo("new transactions!")
+            assertThat(block.hash).isEqualTo("3C166B4E109009074F62B50F4395A63A3DA6159BB42C72BE713A1574823CAE10")
         }
     }
 
     describe("block validation") {
         val nativeChain = NativeChain(DefaultTimeProvider)
-        val block = nativeChain.generateNextBlock("new data!")
+        val block = nativeChain.generateNextBlock(emptyList(), "new transactions!")
         nativeChain.addBlock(block)
-        val nextBlock = nativeChain.generateNextBlock("new data!")
+        val nextBlock = nativeChain.generateNextBlock(emptyList(), "new transactions!")
 
-        on("valid data") {
+        on("valid transactions") {
             it("return true") {
                 assertThat(nativeChain.isValidNewBlock(nextBlock, block)).isTrue()
             }
         }
 
-        on("invalid data") {
-            val invalidBlock = OldBlock(
+        on("invalid transactions") {
+            val invalidBlock = Block(
                 nextBlock.index,
                 nextBlock.previousHash,
                 nextBlock.timestamp,
-                nextBlock.data + "a",
+                nextBlock.transactions,
+                "invalid!",
                 nextBlock.hash
             )
             it("return false") {
@@ -63,7 +65,7 @@ object NativeChainSpec : Spek({
 
             val newBlocks = listOf(
                 GenesisBlock,
-                nativeChain.generateNextBlock("new data!")
+                nativeChain.generateNextBlock(emptyList(), "new transactions!")
             )
 
             nativeChain.replaceChain(newBlocks)
@@ -75,7 +77,7 @@ object NativeChainSpec : Spek({
 
         on("new chain is same size with old chain") {
             val nativeChain = NativeChain(DefaultTimeProvider)
-            val nextBlock = nativeChain.generateNextBlock("new data!")
+            val nextBlock = nativeChain.generateNextBlock(emptyList(), "new transactions!")
             nativeChain.addBlock(nextBlock)
             val newBlocks = listOf(
                 GenesisBlock,
@@ -91,7 +93,7 @@ object NativeChainSpec : Spek({
 
         on("new chain is invalid") {
             val nativeChain = NativeChain(DefaultTimeProvider)
-            val nextBlock = nativeChain.generateNextBlock("new data!")
+            val nextBlock = nativeChain.generateNextBlock(emptyList(), "new transactions!")
             nativeChain.addBlock(nextBlock)
             val newBlocks = listOf(
                 GenesisBlock,

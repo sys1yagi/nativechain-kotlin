@@ -4,6 +4,7 @@ data class Block(
     val index: Long,
     val previousHash: String,
     val timestamp: Long,
-    val data: List<Transaction>,
+    val transactions: List<Transaction>,
+    val script: String,
     val hash: String
 )

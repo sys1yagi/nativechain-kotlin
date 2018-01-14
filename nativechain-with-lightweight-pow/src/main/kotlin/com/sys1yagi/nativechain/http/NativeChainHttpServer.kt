@@ -51,13 +51,14 @@ fun main(args: Array<String>) {
                 call.respondText(blockchain, ContentType.Application.Json)
             }
 
-            post("/mineBlock") {
-                val data = call.request.receiveContent().inputStream().bufferedReader().readText()
-                val mineBlock = jsonConverter.fromJson(data, MineBlock::class.java)
-                nativeChain.addBlock(nativeChain.generateNextBlock(mineBlock.data))
-                webSocketServer.broadcastLatestMessage()
-                call.respond(HttpStatusCode.OK)
-            }
+            // TODO
+//            post("/mineBlock") {
+//                val data = call.request.receiveContent().inputStream().bufferedReader().readText()
+//                val mineBlock = jsonConverter.fromJson(data, MineBlock::class.java)
+//                nativeChain.addBlock(nativeChain.generateNextBlock(mineBlock.data))
+//                webSocketServer.broadcastLatestMessage()
+//                call.respond(HttpStatusCode.OK)
+//            }
 
             get("/peers") {
                 call.respondText(webSocketServer.sockets().joinToString(separator = "\n") { it.peer() })

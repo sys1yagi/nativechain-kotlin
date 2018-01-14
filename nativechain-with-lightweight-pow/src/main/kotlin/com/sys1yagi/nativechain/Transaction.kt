@@ -1,13 +1,13 @@
 package com.sys1yagi.nativechain
 
-class Transaction(val input: List<Input>, val output: List<Output>, var status: Status = Status.UnApproved) {
+import com.sys1yagi.nativechain.util.Sha256Hash
 
-    enum class Status {
-        UnApproved,
-        Approved
-    }
+data class Transaction(
+    val input: List<Input>,
+    val output: List<Output>,
+    val hash: String = Sha256Hash.digest("$input$output")
+) {
+    data class Input(val source: Output)
 
-    data class Input(val user: User, val coin: Coin)
-
-    data class Output(val user: User, val coin: Coin)
+    data class Output(val address: Address, val coin: Coin)
 }

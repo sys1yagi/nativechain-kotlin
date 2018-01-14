@@ -1,11 +1,11 @@
 package com.sys1yagi.nativechain
 
 import com.sys1yagi.nativechain.util.GenesisBlock
+import com.sys1yagi.nativechain.util.Sha256Hash
 import com.sys1yagi.nativechain.util.TimeProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
-import java.security.MessageDigest
 
 class NativeChain(val timeProvider: TimeProvider) {
     val logger: Logger = LoggerFactory.getLogger("NativeChain")
@@ -13,15 +13,15 @@ class NativeChain(val timeProvider: TimeProvider) {
     var blockchain = arrayListOf(GenesisBlock)
         private set
 
-    fun generateNextBlock(blockData: String): OldBlock {
+    fun generateNextBlock(transactions: List<Transaction>, script: String): Block {
         val previousBlock = getLatestBlock()
         val nextIndex = previousBlock.index + 1
         val nextTimestamp = timeProvider.nowSecond()
-        val nextHash = calculateHash(nextIndex, previousBlock.hash, nextTimestamp, blockData)
-        return OldBlock(nextIndex, previousBlock.hash, nextTimestamp, blockData, nextHash)
+        val nextHash = calculateHash(nextIndex, previousBlock.hash, nextTimestamp, transactions, script)
+        return Block(nextIndex, previousBlock.hash, nextTimestamp, transactions, script, nextHash)
     }
 
-    fun isValidNewBlock(newBlock: OldBlock, previousBlock: OldBlock): Boolean {
+    fun isValidNewBlock(newBlock: Block, previousBlock: Block): Boolean {
         return when {
             previousBlock.index + 1 != newBlock.index -> {
                 logger.debug("invalid index")
@@ -39,7 +39,7 @@ class NativeChain(val timeProvider: TimeProvider) {
         }
     }
 
-    fun addBlock(newBlock: OldBlock) {
+    fun addBlock(newBlock: Block) {
         if (isValidNewBlock(newBlock, getLatestBlock())) {
             logger.debug("add succeed")
             blockchain.add(newBlock)
@@ -48,7 +48,7 @@ class NativeChain(val timeProvider: TimeProvider) {
         }
     }
 
-    fun replaceChain(newBlocks: List<OldBlock>) {
+    fun replaceChain(newBlocks: List<Block>) {
         if (isValidChain(newBlocks) && newBlocks.size > blockchain.size) {
             logger.debug("Received blockchain is valid. Replacing current blockchain with received blockchain")
             blockchain = ArrayList(newBlocks)
@@ -57,7 +57,7 @@ class NativeChain(val timeProvider: TimeProvider) {
         }
     }
 
-    fun isValidChain(blockchainToValidate: List<OldBlock>): Boolean {
+    fun isValidChain(blockchainToValidate: List<Block>): Boolean {
         if (blockchainToValidate.isEmpty()) {
             logger.debug("blockchainToValidate is empty.")
             return false
@@ -69,7 +69,7 @@ class NativeChain(val timeProvider: TimeProvider) {
 
         blockchainToValidate.zip(blockchainToValidate.drop(1)).forEachIndexed { index, pair ->
             if (!isValidNewBlock(pair.second, pair.first)) {
-                logger.debug("Faced invalid block. index=${index+1}")
+                logger.debug("Faced invalid block. index=${index + 1}")
                 return false
             }
         }
@@ -82,16 +82,17 @@ class NativeChain(val timeProvider: TimeProvider) {
         index: Long,
         previousHash: String,
         timestamp: Long,
-        data: String): String {
-        return MessageDigest.getInstance("SHA-256")
-            .digest("$index$previousHash$timestamp$data".toByteArray(StandardCharsets.UTF_8))
-            .joinToString(separator = "") { "%02X".format(it) }
+        transactions: List<Transaction>,
+        script: String
+    ): String {
+        return Sha256Hash.digest("$index$previousHash$timestamp$transactions$script")
     }
 
-    private fun calculateHashForBlock(block: OldBlock) = calculateHash(
+    private fun calculateHashForBlock(block: Block) = calculateHash(
         block.index,
         block.previousHash,
         block.timestamp,
-        block.data
+        block.transactions,
+        block.script
     )
 }
