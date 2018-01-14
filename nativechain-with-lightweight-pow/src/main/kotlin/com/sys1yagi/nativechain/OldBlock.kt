@@ -1,9 +1,9 @@
 package com.sys1yagi.nativechain
 
-data class Block(
+data class OldBlock(
     val index: Long,
     val previousHash: String,
     val timestamp: Long,
-    val data: List<Transaction>,
+    val data: String,
     val hash: String
 )

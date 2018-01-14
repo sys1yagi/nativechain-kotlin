@@ -1,8 +1,10 @@
 package com.sys1yagi.nativechain.util
 
-import com.sys1yagi.nativechain.Block
+import com.sys1yagi.nativechain.OldBlock
 
-val GenesisBlock = Block(
+val GenesisAddress = "1234567890"
+
+val GenesisBlock = OldBlock(
     0,
     "0",
     1465154705,

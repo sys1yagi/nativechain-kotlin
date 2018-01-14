@@ -13,15 +13,15 @@ class NativeChain(val timeProvider: TimeProvider) {
     var blockchain = arrayListOf(GenesisBlock)
         private set
 
-    fun generateNextBlock(blockData: String): Block {
+    fun generateNextBlock(blockData: String): OldBlock {
         val previousBlock = getLatestBlock()
         val nextIndex = previousBlock.index + 1
         val nextTimestamp = timeProvider.nowSec()
         val nextHash = calculateHash(nextIndex, previousBlock.hash, nextTimestamp, blockData)
-        return Block(nextIndex, previousBlock.hash, nextTimestamp, blockData, nextHash)
+        return OldBlock(nextIndex, previousBlock.hash, nextTimestamp, blockData, nextHash)
     }
 
-    fun isValidNewBlock(newBlock: Block, previousBlock: Block): Boolean {
+    fun isValidNewBlock(newBlock: OldBlock, previousBlock: OldBlock): Boolean {
         return when {
             previousBlock.index + 1 != newBlock.index -> {
                 logger.debug("invalid index")
@@ -39,7 +39,7 @@ class NativeChain(val timeProvider: TimeProvider) {
         }
     }
 
-    fun addBlock(newBlock: Block) {
+    fun addBlock(newBlock: OldBlock) {
         if (isValidNewBlock(newBlock, getLatestBlock())) {
             logger.debug("add succeed")
             blockchain.add(newBlock)
@@ -48,7 +48,7 @@ class NativeChain(val timeProvider: TimeProvider) {
         }
     }
 
-    fun replaceChain(newBlocks: List<Block>) {
+    fun replaceChain(newBlocks: List<OldBlock>) {
         if (isValidChain(newBlocks) && newBlocks.size > blockchain.size) {
             logger.debug("Received blockchain is valid. Replacing current blockchain with received blockchain")
             blockchain = ArrayList(newBlocks)
@@ -57,7 +57,7 @@ class NativeChain(val timeProvider: TimeProvider) {
         }
     }
 
-    fun isValidChain(blockchainToValidate: List<Block>): Boolean {
+    fun isValidChain(blockchainToValidate: List<OldBlock>): Boolean {
         if (blockchainToValidate.isEmpty()) {
             logger.debug("blockchainToValidate is empty.")
             return false
@@ -88,7 +88,7 @@ class NativeChain(val timeProvider: TimeProvider) {
             .joinToString(separator = "") { "%02X".format(it) }
     }
 
-    private fun calculateHashForBlock(block: Block) = calculateHash(
+    private fun calculateHashForBlock(block: OldBlock) = calculateHash(
         block.index,
         block.previousHash,
         block.timestamp,

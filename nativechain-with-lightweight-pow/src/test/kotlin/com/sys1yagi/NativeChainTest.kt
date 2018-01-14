@@ -2,7 +2,7 @@ package com.sys1yagi
 
 import com.nhaarman.mockito_kotlin.mock
 import com.nhaarman.mockito_kotlin.whenever
-import com.sys1yagi.nativechain.Block
+import com.sys1yagi.nativechain.OldBlock
 import com.sys1yagi.nativechain.NativeChain
 import com.sys1yagi.nativechain.util.DefaultTimeProvider
 import com.sys1yagi.nativechain.util.GenesisBlock
@@ -35,7 +35,7 @@ class NativeChainTest {
 
         assertThat(nativeChain.isValidNewBlock(nextBlock, block)).isTrue()
 
-        val invalidBlock = Block(
+        val invalidBlock = OldBlock(
             nextBlock.index,
             nextBlock.previousHash,
             nextBlock.timestamp,

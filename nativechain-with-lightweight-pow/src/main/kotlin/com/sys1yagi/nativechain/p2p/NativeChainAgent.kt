@@ -1,6 +1,6 @@
 package com.sys1yagi.nativechain.p2p
 
-import com.sys1yagi.nativechain.Block
+import com.sys1yagi.nativechain.OldBlock
 import com.sys1yagi.nativechain.NativeChain
 import com.sys1yagi.nativechain.util.JsonConverter
 import com.sys1yagi.nativechain.p2p.connection.KtorConnection
@@ -107,7 +107,7 @@ class NativeChainAgent(val nativeChain: NativeChain, val jsonConverter: JsonConv
         broadcast("{'type': ${MessageType.QUERY_ALL.ordinal}}")
     }
 
-    private fun handleBlockchainResponse(receivedBlocks: List<Block>) {
+    private fun handleBlockchainResponse(receivedBlocks: List<OldBlock>) {
         val latestBlockReceived = receivedBlocks.last()
         val latestBlockHeld = nativeChain.getLatestBlock()
         if (latestBlockReceived.index > latestBlockHeld.index) {
