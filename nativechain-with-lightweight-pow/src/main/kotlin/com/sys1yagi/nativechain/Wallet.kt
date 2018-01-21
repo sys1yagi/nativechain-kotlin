@@ -25,4 +25,8 @@ class Wallet(val address: Address, private val nativeChain: NativeChain) {
             Coin(a.amount + b.coin.amount)
         })
     }
+
+    fun makeTransaction(){
+
+    }
 }

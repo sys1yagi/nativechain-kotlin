@@ -6,6 +6,8 @@ import com.sys1yagi.nativechain.util.DefaultTimeProvider
 import com.sys1yagi.nativechain.util.GsonConverter
 import com.sys1yagi.nativechain.p2p.NativeChainAgent
 import com.sys1yagi.nativechain.p2p.Peer
+import com.sys1yagi.nativechain.p2p.connection.ConnectionFactory
+import com.sys1yagi.nativechain.p2p.connection.KtorAndTyrusConnectionFactory
 import io.ktor.application.call
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -35,7 +37,7 @@ fun main(args: Array<String>) {
 
     val nativeChain = NativeChain(DefaultTimeProvider)
     val jsonConverter = GsonConverter(Gson())
-    val webSocketServer = NativeChainAgent(nativeChain, jsonConverter)
+    val webSocketServer = NativeChainAgent(nativeChain, jsonConverter, KtorAndTyrusConnectionFactory())
 
     // connect peers
     webSocketServer.connectToPeers(peers)
@@ -61,7 +63,7 @@ fun main(args: Array<String>) {
 //            }
 
             get("/peers") {
-                call.respondText(webSocketServer.sockets().joinToString(separator = "\n") { it.peer() })
+                call.respondText(webSocketServer.connections().joinToString(separator = "\n") { it.peer() })
             }
 
             post("/addPeer") {
@@ -70,6 +72,8 @@ fun main(args: Array<String>) {
                 webSocketServer.connectToPeers(listOf(peer))
                 call.respond(HttpStatusCode.OK)
             }
+
+
         }
     }.start(wait = true)
 }

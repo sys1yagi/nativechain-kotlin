@@ -3,9 +3,8 @@ package com.sys1yagi.nativechain.p2p
 import com.sys1yagi.nativechain.Block
 import com.sys1yagi.nativechain.NativeChain
 import com.sys1yagi.nativechain.util.JsonConverter
-import com.sys1yagi.nativechain.p2p.connection.KtorConnection
-import com.sys1yagi.nativechain.p2p.connection.TryusConnection
 import com.sys1yagi.nativechain.p2p.connection.Connection
+import com.sys1yagi.nativechain.p2p.connection.ConnectionFactory
 import io.ktor.application.install
 import io.ktor.features.CallLogging
 import io.ktor.features.DefaultHeaders
@@ -20,12 +19,16 @@ import org.slf4j.LoggerFactory
 import java.net.URI
 import java.time.Duration
 
-class NativeChainAgent(val nativeChain: NativeChain, val jsonConverter: JsonConverter) {
+class NativeChainAgent(
+        private val nativeChain: NativeChain,
+        private val jsonConverter: JsonConverter,
+        private val connectionFactory: ConnectionFactory
+) {
 
     private val logger = LoggerFactory.getLogger("NativeChainAgent")
 
     private fun buildChainMessage() =
-        """
+            """
         {
             'type': ${MessageType.RESPONSE_BLOCKCHAIN.ordinal},
             'blockchain': ${jsonConverter.toJson(nativeChain.blockchain)}
@@ -33,23 +36,23 @@ class NativeChainAgent(val nativeChain: NativeChain, val jsonConverter: JsonConv
         """
 
     private fun buildLatestMessage() =
-        """
+            """
         {
             'type': ${MessageType.RESPONSE_BLOCK.ordinal},
             'block': ${jsonConverter.toJson(nativeChain.getLatestBlock())}
         }
         """
 
-    private val sockets = arrayListOf<Connection>()
+    private val connections = arrayListOf<Connection>()
 
-    fun sockets(): List<Connection> = sockets
+    fun connections(): List<Connection> = connections
 
     fun connectToPeers(newPeers: List<Peer>) {
         newPeers.forEach { peer ->
-            val webSocketChannel = TryusConnection(URI.create(peer.host))
-            webSocketChannel.connect {
+            val connection = connectionFactory.createTyrusConnection(URI.create(peer.host))
+            connection.connect {
                 async {
-                    initConnection(webSocketChannel)
+                    initConnection(connection)
                 }
             }
         }
@@ -65,8 +68,8 @@ class NativeChainAgent(val nativeChain: NativeChain, val jsonConverter: JsonConv
             routing {
                 webSocket {
                     logger.debug("receive p2p connection")
-                    val socket = KtorConnection(this)
-                    initConnection(socket)
+                    val connection = connectionFactory.createKtorConnection(this)
+                    initConnection(connection)
                 }
             }
         }.start(wait = false)
@@ -74,7 +77,7 @@ class NativeChainAgent(val nativeChain: NativeChain, val jsonConverter: JsonConv
     }
 
     suspend fun initConnection(session: Connection) {
-        sockets += session
+        connections += session
         chainLengthMessage(session)
 
         try {
@@ -153,7 +156,7 @@ class NativeChainAgent(val nativeChain: NativeChain, val jsonConverter: JsonConv
     }
 
     private fun broadcast(message: String) {
-        sockets.forEach {
+        connections.forEach {
             write(it, message)
         }
     }
