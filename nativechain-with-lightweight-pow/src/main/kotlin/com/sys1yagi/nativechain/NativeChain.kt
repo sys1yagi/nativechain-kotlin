@@ -10,8 +10,11 @@ import java.nio.charset.StandardCharsets
 class NativeChain(val timeProvider: TimeProvider) {
     val logger: Logger = LoggerFactory.getLogger("NativeChain")
 
-    var blockchain = arrayListOf(GenesisBlock)
-        private set
+    val blockchain = arrayListOf(GenesisBlock)
+
+    val candidateBlock: Block? = null
+
+    val unapprovedTransactions = arrayListOf<Transaction>()
 
     fun generateNextBlock(transactions: List<Transaction>, script: String): Block {
         val previousBlock = getLatestBlock()
@@ -51,7 +54,8 @@ class NativeChain(val timeProvider: TimeProvider) {
     fun replaceChain(newBlocks: List<Block>) {
         if (isValidChain(newBlocks) && newBlocks.size > blockchain.size) {
             logger.debug("Received blockchain is valid. Replacing current blockchain with received blockchain")
-            blockchain = ArrayList(newBlocks)
+            blockchain.clear()
+            blockchain.addAll(newBlocks)
         } else {
             logger.debug("Received blockchain invalid")
         }
@@ -95,4 +99,10 @@ class NativeChain(val timeProvider: TimeProvider) {
         block.transactions,
         block.script
     )
+
+    fun proofOfWork(block: Block): String {
+
+        return "a"
+    }
+
 }
